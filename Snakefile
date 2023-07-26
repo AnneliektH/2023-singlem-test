@@ -46,7 +46,7 @@ rule singlem_download_data:
         addpath=".singlem_addpath",
     output:
         data_touch=touch(".singlem_datadownload"),
-        db="singlem_data/S3.2.0.GTDB_r214.metapackage_20230428.smpkg.zb",
+        db=directory("singlem_data/S3.2.0.GTDB_r214.metapackage_20230428.smpkg.zb"),
         #S3.2.0.GTDB_r214.metapackage_20230428.smpkg.zb
     params:
         datadir= singlem_data_dir,
