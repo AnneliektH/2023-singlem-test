@@ -42,13 +42,11 @@ rule singlem_add_path:
         cd ${{PWD}}/singlem && git pull && cd -
         """
 
-rule singlem_download_data:
+checkpoint singlem_download_data:
     input:
         addpath=".singlem_addpath",
     output:
-        data_touch=touch(".singlem_datadownload"),
-        db=directory("singlem_data/S3.2.0.GTDB_r214.metapackage_20230428.smpkg.zb"),
-        #S3.2.0.GTDB_r214.metapackage_20230428.smpkg.zb
+        db=directory("singlem_data"), #currently makes: singlem_data/S3.2.0.GTDB_r214.metapackage_20230428.smpkg.zb
     params:
         datadir= singlem_data_dir,
     conda: "singlem"
@@ -57,16 +55,20 @@ rule singlem_download_data:
         singlem data --output-directory {params.datadir}
         """
 
+
+def get_db_dirname(wildcards):
+    data_dir = checkpoints.singlem_download_data.get(**wildcards).output[0]
+    DB=glob_wildcards(os.path.join(data_dir, "{db}.zb")).db
+    return expand(os.path.join(data_dir, "{db}.zb"), db=DB)
+
+
 rule singlem_pipe:
     input:
         addpath=".singlem_addpath",
         sra="SRR8859675",
-        db=os.path.join(singlem_data_dir,"S3.2.0.GTDB_r214.metapackage_20230428.smpkg.zb"),
+        db=get_db_dirname,
     output:
         otu_table="SRR8859675.otu_table.txt",
-    #params:
-        #metapackage_path=glob.glob(os.path.join(singlem_data_dir, '*.zb'))[0],
-    #    metapackage_path=os.path.join(singlem_data_dir, '*.zb')
     conda: "singlem"
     threads: 16
     shell:
