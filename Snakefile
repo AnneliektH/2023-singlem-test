@@ -17,6 +17,7 @@ rule clone_and_create_singlem_env:
         git clone https://github.com/wwood/singlem --depth 1
         cd singlem
         mamba env create -n singlem -f singlem.yml
+        mamba install kingfisher # for SRA format
         """
 
 rule singlem_add_path:
@@ -63,7 +64,7 @@ rule singlem_pipe:
         db=os.path.join(singlem_data_dir,"S3.2.0.GTDB_r214.metapackage_20230428.smpkg.zb"),
     output:
         otu_table="SRR8859675.otu_table.txt",
-    params:
+    #params:
         #metapackage_path=glob.glob(os.path.join(singlem_data_dir, '*.zb'))[0],
     #    metapackage_path=os.path.join(singlem_data_dir, '*.zb')
     conda: "singlem"
