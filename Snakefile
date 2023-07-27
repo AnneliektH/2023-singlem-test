@@ -1,6 +1,7 @@
-import glob
+import os
 
 out_dir = 'output.singlem'
+logs_dir = os.path.join(out_dir, 'logs')
 singlem_data_dir = config.get('singlem_data_dir', 'singlem_data')
 
 rule all:
@@ -12,6 +13,8 @@ rule clone_and_create_singlem_env:
     output: 
         sdir=directory('singlem'),
         sm='singlem/bin/singlem',
+    log: os.path.join(logs_dir, 'clone_and_create_env.log')
+    benchmark: os.path.join(logs_dir, 'clone_and_create_env.benchmark')
     shell:
         """
         git clone https://github.com/wwood/singlem --depth 1
@@ -26,6 +29,8 @@ rule singlem_add_path:
     output:
         addpath=".singlem_addpath",
     conda: "singlem"
+    log: os.path.join(logs_dir, 'singlem_add_path.log')
+    benchmark: os.path.join(logs_dir, 'singlem_add_path.benchmark')
     shell:
         """
         set -e  # Abort the script if any command fails
@@ -46,13 +51,13 @@ checkpoint singlem_download_data:
     input:
         addpath=".singlem_addpath",
     output:
-        db=directory("singlem_data"), #currently makes: singlem_data/S3.2.0.GTDB_r214.metapackage_20230428.smpkg.zb
-    params:
-        datadir= singlem_data_dir,
+        db=directory(singlem_data_dir), #currently makes: singlem_data/S3.2.0.GTDB_r214.metapackage_20230428.smpkg.zb
     conda: "singlem"
+    log: os.path.join(logs_dir, 'singlem_download_data.log')
+    benchmark: os.path.join(logs_dir, 'singlem_download_data.benchmark')
     shell:
         """
-        singlem data --output-directory {params.datadir}
+        singlem data --output-directory {output}
         """
 
 
@@ -71,6 +76,8 @@ rule singlem_pipe:
         otu_table="SRR8859675.otu_table.txt",
     conda: "singlem"
     threads: 16
+    log: os.path.join(logs_dir, 'singlem_pipe.log')
+    benchmark: os.path.join(logs_dir, 'singlem_pipe.benchmark')
     shell:
        """
        export SINGLEM_METAPACKAGE_PATH={input.db}
