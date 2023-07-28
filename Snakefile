@@ -3,10 +3,16 @@ import os
 out_dir = 'output.singlem'
 logs_dir = os.path.join(out_dir, 'logs')
 singlem_data_dir = config.get('singlem_data_dir', 'singlem_data')
+SAMPLES = config.get('samples', ['SRR8859675'])
+
+wildcard_constraints:
+    sample='\w+',
+
 
 rule all:
     input:
-        "SRR8859675.otu_table.txt",
+#        expand(os.path.join(out_dir, "full", "{sample}.otu_table.txt"), sample=SAMPLES),
+        expand(os.path.join(out_dir, "rpl11", "{sample}.otu_table.txt"), sample=SAMPLES)
 
 
 rule clone_and_create_singlem_env:
@@ -67,17 +73,17 @@ def get_db_dirname(wildcards):
     return expand(os.path.join(data_dir, "{db}.zb"), db=DB)
 
 
-rule singlem_pipe:
+rule singlem_pipe_full:
     input:
         addpath=".singlem_addpath",
-        sra="SRR8859675",
+        sra="{sample}",
         db=get_db_dirname,
     output:
-        otu_table="SRR8859675.otu_table.txt",
+        otu_table=os.path.join(out_dir, "full", "{sample}.otu_table.txt"),
     conda: "singlem"
     threads: 16
-    log: os.path.join(logs_dir, 'singlem_pipe.log')
-    benchmark: os.path.join(logs_dir, 'singlem_pipe.benchmark')
+    log: os.path.join(logs_dir, 'singlem_pipe_full', '{sample}.log')
+    benchmark: os.path.join(logs_dir, 'singlem_pipe_full', '{sample}.benchmark')
     shell:
        """
        export SINGLEM_METAPACKAGE_PATH={input.db}
@@ -85,3 +91,28 @@ rule singlem_pipe:
                      --otu-table {output.otu_table} \
                      --threads {threads}
        """
+
+
+rule singlem_pipe_rpl:
+    input:
+        addpath=".singlem_addpath",
+        sra="{sample}",
+        db=get_db_dirname,
+    output:
+        otu_table=os.path.join(out_dir, "rpl11", "{sample}.otu_table.txt"),
+    conda: "singlem"
+    threads: 16
+    params:
+        pkg_path = "payload_directory/S3.40.ribosomal_protein_L11_rplK.spkg",
+    log: os.path.join(logs_dir, 'singlem_pipe_rpl11', '{sample}.log')
+    benchmark: os.path.join(logs_dir, 'singlem_pipe_rpl11', '{sample}.benchmark')
+    shell:
+       """
+       export SINGLEM_METAPACKAGE_PATH={input.db}/{params.pkg_path}
+       singlem pipe --sra-files {input.sra} \
+                     --otu-table {output.otu_table} \
+                     --singlem-packages {input.db}/{params.pkg_path}  \
+                     --threads {threads} \
+                     --no-assign-taxonomy
+       """
+# taxonomy assignment doesn't work for now
