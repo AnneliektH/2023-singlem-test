@@ -18,21 +18,19 @@ rule all:
 rule clone_and_create_singlem_env:
     output: 
         sdir=directory('singlem'),
-        sm='singlem/bin/singlem',
+        sm_dl=".singlem_clone_and_create"
     log: os.path.join(logs_dir, 'clone_and_create_env.log')
     benchmark: os.path.join(logs_dir, 'clone_and_create_env.benchmark')
     shell:
         """
         git clone https://github.com/wwood/singlem --depth 1
-        cd singlem
-        mamba env create -n singlem -f singlem.yml
-        conda activate singlem
-        mamba install kingfisher # for SRA format
+        touch {output.sm_dl}
+        mamba env create -n singlem -f singlem/singlem.yml
         """
 
 rule singlem_add_path:
     input:
-        sm='singlem/bin/singlem'
+        sm_dl=".singlem_clone_and_create"
     output:
         addpath=".singlem_addpath",
     conda: "singlem"
@@ -40,6 +38,7 @@ rule singlem_add_path:
     benchmark: os.path.join(logs_dir, 'singlem_add_path.benchmark')
     shell:
         """
+        mamba install -y kingfisher # for SRA format
         set -e  # Abort the script if any command fails
 
         # Create an activation script for the conda environment (add to path when opening the env)
