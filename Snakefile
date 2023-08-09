@@ -26,6 +26,7 @@ rule clone_and_create_singlem_env:
         git clone https://github.com/wwood/singlem --depth 1
         cd singlem
         mamba env create -n singlem -f singlem.yml
+        conda activate singlem
         mamba install kingfisher # for SRA format
         """
 
