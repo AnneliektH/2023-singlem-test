@@ -1,6 +1,8 @@
+# imports
 import os
 import pandas as pd
 
+# set configfile with samplenames
 configfile: "config.yaml"
 
 # Load the metadata file
@@ -20,16 +22,18 @@ SAMPLES = config.get('samples', sra_runs)
 wildcard_constraints:
     sample='\w+',
 
-
 rule all:
     input:
 #        expand(os.path.join(out_dir, "full", "{sample}.otu_table.txt"), sample=SAMPLES),
         expand(os.path.join(out_dir, "rpl11", "{sample}.otu_table.txt"), sample=SAMPLES)
 
-
+# Download SRA files
 rule download_sra:
+    #input:
+        # otu_table = os.path.join(out_dir, "rpl11", "{sample}.otu_table.txt")
+        #otu_table = "output.singlem/rpl11/{sample}.otu_table.txt"
     output:
-        "sra/{sample}"
+        sra = "sra/{sample}"
     log:
         "logs/prefetch/{sample}.log"
     conda:
@@ -37,12 +41,12 @@ rule download_sra:
     shell:
         """
         mkdir -p ./sra/ 
-        if [ ! -f "output.singlem/rpl11/{wildcards.sample}.otu_table.txt" ] && [ ! -f "sra/{wildcards.sample}" ]; then
-            aws s3 cp --quiet --no-sign-request s3://sra-pub-run-odp/sra/{wildcards.sample}/{wildcards.sample} sra/{wildcards.sample}
+        if [ ! -f "output.singlem/rpl11/{wildcards.sample}.otu_table.txt" ] && [ ! -f "{output.sra}" ]; then
+            aws s3 cp --quiet --no-sign-request s3://sra-pub-run-odp/sra/{wildcards.sample}/{wildcards.sample} {output.sra}
         fi
         """
 
-
+# Install SingleM (only has to run once)
 rule clone_and_create_singlem_env:
     output: 
         sdir=directory('singlem'),
@@ -56,6 +60,7 @@ rule clone_and_create_singlem_env:
         mamba env create -n singlem -f singlem/singlem.yml
         """
 
+# Install SingleM and add path (only has to run once)
 rule singlem_add_path:
     input:
         sm_dl=".singlem_clone_and_create"
@@ -81,6 +86,7 @@ rule singlem_add_path:
         cd ${{PWD}}/singlem && git pull && cd -
         """
 
+# Install SingleM and download the reference data (only has to run once)
 checkpoint singlem_download_data:
     input:
         addpath=".singlem_addpath",
@@ -94,13 +100,13 @@ checkpoint singlem_download_data:
         singlem data --output-directory {output}
         """
 
-
+# Find the folder with the singleM database in it
 def get_db_dirname(wildcards):
     data_dir = checkpoints.singlem_download_data.get(**wildcards).output[0]
     DB=glob_wildcards(os.path.join(data_dir, "{db}.zb")).db
     return expand(os.path.join(data_dir, "{db}.zb"), db=DB)
 
-
+# Use SingleM to compare SRA file to complete reference database
 rule singlem_pipe_full:
     input:
         addpath=".singlem_addpath",
@@ -120,7 +126,7 @@ rule singlem_pipe_full:
                      --threads {threads}
        """
 
-
+# Use SingleM to compare SRA file to only RpL11
 rule singlem_pipe_rpl:
     input:
         addpath=".singlem_addpath",
@@ -141,6 +147,6 @@ rule singlem_pipe_rpl:
                      --otu-table {output.otu_table} \
                      --singlem-packages {input.db}/{params.pkg_path}  \
                      --threads {threads} \
-                     --no-assign-taxonomy
+                     --no-assign-taxonomy 
        """
 # taxonomy assignment doesn't work for now
