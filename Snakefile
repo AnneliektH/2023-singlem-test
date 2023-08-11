@@ -1,9 +1,21 @@
 import os
+import pandas as pd
 
+configfile: "config.yaml"
+
+# Load the metadata file
+metadata = pd.read_csv(config['metadata_file_path'], usecols=['Run'])
+
+# Create a list of run ids
+sra_runs = metadata['Run'].tolist()
+
+# define output file directories
 out_dir = 'output.singlem'
 logs_dir = os.path.join(out_dir, 'logs')
 singlem_data_dir = config.get('singlem_data_dir', 'singlem_data')
-SAMPLES = config.get('samples', ['SRR8859675'])
+
+# Define samples
+SAMPLES = config.get('samples', sra_runs)
 
 wildcard_constraints:
     sample='\w+',
@@ -13,6 +25,22 @@ rule all:
     input:
 #        expand(os.path.join(out_dir, "full", "{sample}.otu_table.txt"), sample=SAMPLES),
         expand(os.path.join(out_dir, "rpl11", "{sample}.otu_table.txt"), sample=SAMPLES)
+
+
+rule download_sra:
+    output:
+        "sra/{sample}"
+    log:
+        "logs/prefetch/{sample}.log"
+    conda:
+        "environment.yaml"
+    shell:
+        """
+        mkdir -p ./sra/ 
+        if [ ! -f "output.singlem/rpl11/{wildcards.sample}.otu_table.txt" ] && [ ! -f "sra/{wildcards.sample}" ]; then
+            aws s3 cp --quiet --no-sign-request s3://sra-pub-run-odp/sra/{wildcards.sample}/{wildcards.sample} sra/{wildcards.sample}
+        fi
+        """
 
 
 rule clone_and_create_singlem_env:
@@ -96,7 +124,7 @@ rule singlem_pipe_full:
 rule singlem_pipe_rpl:
     input:
         addpath=".singlem_addpath",
-        sra="{sample}",
+        sra="sra/{sample}",
         db=get_db_dirname,
     output:
         otu_table=os.path.join(out_dir, "rpl11", "{sample}.otu_table.txt"),

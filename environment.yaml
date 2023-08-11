@@ -1,0 +1,15 @@
+name: 2023-singlem
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - snakemake=7.22.0
+  - python=3.10
+  - bioconda::sra-tools
+  - pandas
+  - ca-certificates
+  - certifi
+  - openssl
+  - pip:
+    - awscli==1.29.20
