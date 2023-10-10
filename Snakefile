@@ -147,6 +147,6 @@ rule singlem_pipe_rpl:
                      --otu-table {output.otu_table} \
                      --singlem-packages {input.db}/{params.pkg_path}  \
                      --threads {threads} \
-                     --no-assign-taxonomy 
+                     --no-assign-taxonomy && rm {input.sra}
        """
 # taxonomy assignment doesn't work for now
