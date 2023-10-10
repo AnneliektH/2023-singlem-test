@@ -33,7 +33,7 @@ rule download_sra:
         # otu_table = os.path.join(out_dir, "rpl11", "{sample}.otu_table.txt")
         #otu_table = "output.singlem/rpl11/{sample}.otu_table.txt"
     output:
-        sra = "sra/{sample}"
+        sra = temporary("sra/{sample}")
     log:
         "logs/prefetch/{sample}.log"
     conda:
@@ -133,7 +133,7 @@ rule singlem_pipe_rpl:
         sra="sra/{sample}",
         db=get_db_dirname,
     output:
-        otu_table=os.path.join(out_dir, "rpl11", "{sample}.otu_table.txt"),
+        otu_table=protected(os.path.join(out_dir, "rpl11", "{sample}.otu_table.txt")),
     conda: "singlem"
     threads: 16
     params:
@@ -147,6 +147,6 @@ rule singlem_pipe_rpl:
                      --otu-table {output.otu_table} \
                      --singlem-packages {input.db}/{params.pkg_path}  \
                      --threads {threads} \
-                     --no-assign-taxonomy && rm {input.sra}
+                     --no-assign-taxonomy
        """
 # taxonomy assignment doesn't work for now
