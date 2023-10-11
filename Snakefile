@@ -71,7 +71,7 @@ rule singlem_add_path:
     benchmark: os.path.join(logs_dir, 'singlem_add_path.benchmark')
     shell:
         """
-        mamba install -y kingfisher # for SRA format
+        mamba install -y kingfisher -c bioconda # for SRA format
         set -e  # Abort the script if any command fails
 
         # Create an activation script for the conda environment (add to path when opening the env)
