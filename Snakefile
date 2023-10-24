@@ -6,7 +6,8 @@ import pandas as pd
 configfile: "config.yaml"
 
 # Load the metadata file
-metadata = pd.read_csv(config['metadata_file_path'], usecols=['Run'])
+metadata = pd.read_csv(config['metadata_file_path'], 
+usecols=[0], names=['Run'], header=None, sep='\t')
 
 # Create a list of run ids
 sra_runs = metadata['Run'].tolist()
@@ -29,9 +30,6 @@ rule all:
 
 # Download SRA files
 rule download_sra:
-    #input:
-        # otu_table = os.path.join(out_dir, "rpl11", "{sample}.otu_table.txt")
-        #otu_table = "output.singlem/rpl11/{sample}.otu_table.txt"
     output:
         sra = temporary("sra/{sample}")
     log:
