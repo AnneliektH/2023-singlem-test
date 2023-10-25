@@ -116,7 +116,7 @@ rule singlem_pipe_full:
     output:
         otu_table=os.path.join(out_dir, "full", "{sample}.otu_table.txt"),
     conda: "singlem"
-    threads: 16
+    threads: 32
     log: os.path.join(logs_dir, 'singlem_pipe_full', '{sample}.log')
     benchmark: os.path.join(logs_dir, 'singlem_pipe_full', '{sample}.benchmark')
     shell:
@@ -136,7 +136,7 @@ rule singlem_pipe_rpl:
     output:
         otu_table=protected(os.path.join(out_dir, "rpl11", "{sample}.otu_table.txt")),
     conda: "singlem"
-    threads: 16
+    threads: 32
     params:
         pkg_path = "payload_directory/S3.40.ribosomal_protein_L11_rplK.spkg",
     log: os.path.join(logs_dir, 'singlem_pipe_rpl11', '{sample}.log')
