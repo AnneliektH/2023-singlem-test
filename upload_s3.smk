@@ -15,6 +15,6 @@ rule upload_to_s3:
         "benchmarks/{sample}_upload_to_s3_benchmark.txt"
     shell:
         """
-        aws s3api put-object --bucket {params.my_s3_bucket} \
+        aws s3api put-object --bucket {params.bucket} \
         --key {params.key} --body {input} &> {log}
         """
