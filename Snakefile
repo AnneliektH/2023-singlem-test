@@ -1,6 +1,8 @@
 # imports
 import os
 import pandas as pd
+include: "upload_s3.smk"
+
 
 # set configfile with samplenames
 configfile: "config.yaml"
@@ -26,7 +28,8 @@ wildcard_constraints:
 rule all:
     input:
 #        expand(os.path.join(out_dir, "full", "{sample}.otu_table.txt"), sample=SAMPLES),
-        expand(os.path.join(out_dir, "rpl11", "{sample}.otu_table.txt"), sample=SAMPLES)
+#        expand(os.path.join(out_dir, "rpl11", "{sample}.otu_table.txt"), sample=SAMPLES)
+        expand("s3_upload/s3_file_upload_{sample}.done", sample=SAMPLES)
 
 # Download SRA files
 rule download_sra:
