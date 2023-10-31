@@ -136,7 +136,7 @@ rule singlem_pipe_rpl:
     output:
         otu_table=protected(os.path.join(out_dir, "rpl11", "{sample}.otu_table.txt")),
     conda: "singlem"
-    threads: 32
+    threads: 8
     params:
         pkg_path = "payload_directory/S3.40.ribosomal_protein_L11_rplK.spkg",
     log: os.path.join(logs_dir, 'singlem_pipe_rpl11', '{sample}.log')
@@ -144,7 +144,7 @@ rule singlem_pipe_rpl:
     shell:
        """
        export SINGLEM_METAPACKAGE_PATH={input.db}/{params.pkg_path}
-       singlem pipe --sra-files {input.sra} \
+       timeout 1h singlem pipe --sra-files {input.sra} \
                      --otu-table {output.otu_table} \
                      --singlem-packages {input.db}/{params.pkg_path}  \
                      --threads {threads} \
